@@ -33,7 +33,7 @@ void setup()
 {
   Bridge.begin(BAUDRATE);
   Console.begin();
-  // while(!Console);
+  //while(!Console);
   if (!rf95.init())
     Console.println("init failed");
   ;
@@ -104,7 +104,7 @@ void loop()
       {
         if (buf[0] == 1 && buf[1] == 1 && buf[2] == 1) //Check if the ID match the LoRa Node ID
         {
-          uint8_t data[] = "   Server ACK";//Reply
+          uint8_t data[] = "    server ACK";//Reply
           data[0] = buf[0];
           data[1] = buf[1];
           data[2] = buf[2];
