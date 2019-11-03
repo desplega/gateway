@@ -104,14 +104,14 @@ void loop()
       {
         if (buf[0] == 1 && buf[1] == 1 && buf[2] == 1) //Check if the ID match the LoRa Node ID
         {
-          uint8_t data[] = "    server ACK";//Reply
+          uint8_t data[] = "    server ACK"; //Reply
           data[0] = buf[0];
           data[1] = buf[1];
           data[2] = buf[2];
           rf95.send(data, sizeof(data));// Send Reply to LoRa Node
           rf95.waitPacketSent();
-          int newData[4] = {0, 0, 0, 0}; //Store Sensor Data here
-          for (int i = 0; i < 4; i++)
+          int newData[5] = {0, 0, 0, 0, 0}; //Store Sensor Data and Mesh status here
+          for (int i = 0; i < 5; i++)
           {
             newData[i] = buf[i + 3];
           }
@@ -119,11 +119,11 @@ void loop()
           int t0l = newData[1];
           int t1h = newData[2];
           int t1l = newData[3];
-          Console.print("Get Temperature 0:");
+          Console.print("Get Temperature 0: ");
           Console.print(t0h);
           Console.print(",");
           Console.println(t0l);
-          Console.print("Get Temperature 1:");
+          Console.print("Get Temperature 1: ");
           Console.print(t1h);
           Console.print(",");
           Console.println(t1l);
@@ -136,6 +136,13 @@ void loop()
           dataString += t1h;
           dataString += ",";
           dataString += t1l;
+
+          int mesh = newData[4];
+          Console.print("Mesh: ");
+          Console.println(mesh);
+
+          dataString += "&field3=";
+          dataString += mesh;
 
           uploadData(); // Send data to MQTT server
           dataString = "";
