@@ -18,6 +18,11 @@
 #include <Process.h>
 RH_RF95 rf95;
 
+// Packet size
+#define DEVICE_ID_LENGTH 6
+#define TEMPERATURE_LENGTH 4
+#define MESH_STATUS_LENGTH 1
+
 //If you use Dragino IoT Mesh Firmware, uncomment below lines.
 //For product: LG01.
 #define BAUDRATE 115200
@@ -110,15 +115,27 @@ void loop()
           data[2] = buf[2];
           rf95.send(data, sizeof(data));// Send Reply to LoRa Node
           rf95.waitPacketSent();
-          int newData[5] = {0, 0, 0, 0, 0}; //Store Sensor Data and Mesh status here
-          for (int i = 0; i < 5; i++)
+
+          int newData[DEVICE_ID_LENGTH + TEMPERATURE_LENGTH + MESH_STATUS_LENGTH];//Store Device ID, Sensor Data and Mesh status here
+          for (int i = 0; i < DEVICE_ID_LENGTH + TEMPERATURE_LENGTH + MESH_STATUS_LENGTH; i++)
           {
             newData[i] = buf[i + 3];
           }
-          int t0h = newData[0];
-          int t0l = newData[1];
-          int t1h = newData[2];
-          int t1l = newData[3];
+
+          // Format output as string
+          String deviceID = "";
+          for (int i = 0; i < DEVICE_ID_LENGTH; i++)
+          {
+            if (newData[i] < 10)
+              deviceID += '0';
+            deviceID += (unsigned char)newData[i];
+          }
+          Console.print("Device ID: ");
+          Console.println(deviceID);
+          int t0h = newData[DEVICE_ID_LENGTH];
+          int t0l = newData[DEVICE_ID_LENGTH + 1];
+          int t1h = newData[DEVICE_ID_LENGTH + 2];
+          int t1l = newData[DEVICE_ID_LENGTH + 3];
           Console.print("Get Temperature 0: ");
           Console.print(t0h);
           Console.print(",");
@@ -127,21 +144,23 @@ void loop()
           Console.print(t1h);
           Console.print(",");
           Console.println(t1l);
-
+          
           dataString = "field1=";
+          dataString += deviceID;
+          dataString += "&field2=";
           dataString += t0h;
           dataString += ",";
           dataString += t0l;
-          dataString += "&field2=";
+          dataString += "&field3=";
           dataString += t1h;
           dataString += ",";
           dataString += t1l;
 
-          int mesh = newData[4];
+          int mesh = newData[DEVICE_ID_LENGTH + TEMPERATURE_LENGTH];
           Console.print("Mesh: ");
           Console.println(mesh);
 
-          dataString += "&field3=";
+          dataString += "&field4=";
           dataString += mesh;
 
           uploadData(); // Send data to MQTT server
