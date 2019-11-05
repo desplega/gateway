@@ -32,7 +32,7 @@ uint16_t recCRCData = 0;
 float frequency = 868.0;
 String dataString = "";
 
-void uploadData(); // Upload Data to ThingSpeak.
+void uploadData(); // Upload Data to MQTT server.
 
 void setup()
 {
@@ -41,7 +41,7 @@ void setup()
   //while(!Console);
   if (!rf95.init())
     Console.println("init failed");
-  ;
+
   // Setup ISM frequency
   rf95.setFrequency(frequency);
   // Setup Power,dBm
@@ -123,6 +123,8 @@ void loop()
           }
 
           // Format output as string
+          
+          // Device ID
           String deviceID = "";
           for (int i = 0; i < DEVICE_ID_LENGTH; i++)
           {
@@ -132,6 +134,8 @@ void loop()
           }
           Console.print("Device ID: ");
           Console.println(deviceID);
+
+          // Temperatures
           int t0h = newData[DEVICE_ID_LENGTH];
           int t0l = newData[DEVICE_ID_LENGTH + 1];
           int t1h = newData[DEVICE_ID_LENGTH + 2];
@@ -144,24 +148,28 @@ void loop()
           Console.print(t1h);
           Console.print(",");
           Console.println(t1l);
-          
-          dataString = "field1=";
-          dataString += deviceID;
-          dataString += "&field2=";
-          dataString += t0h;
-          dataString += ",";
-          dataString += t0l;
-          dataString += "&field3=";
-          dataString += t1h;
-          dataString += ",";
-          dataString += t1l;
 
+          // Mesh status
           int mesh = newData[DEVICE_ID_LENGTH + TEMPERATURE_LENGTH];
           Console.print("Mesh: ");
           Console.println(mesh);
 
-          dataString += "&field4=";
+          // Message for MQTT
+          dataString = "{\"data\":{\"t\":\"";
+          dataString += t0h;
+          dataString += ".";
+          dataString += t0l;
+          dataString += "\",\"h\":\"";
+          dataString += t1h;
+          dataString += ".";
+          dataString += t1l;
+          dataString += "\",\"l\":\"";
           dataString += mesh;
+          dataString += "\"},\"macAddress\":\"";
+          dataString += deviceID;
+          dataString += "\"}";
+          Console.print("MQTT message: ");
+          Console.println(dataString);
 
           uploadData(); // Send data to MQTT server
           dataString = "";
@@ -172,8 +180,7 @@ void loop()
     }
     else
     {
-      //Console.println("recv failed");
-      ;
+      Console.println("Recv failed");
     }
   }
 }
@@ -186,7 +193,7 @@ void uploadData() {//Upload Data to MQTT server
   p.addParameter("-h");
   p.addParameter("mqtt.desplega.com");
   p.addParameter("-t");
-  p.addParameter("test");
+  p.addParameter("dht11");
   p.addParameter("-m");
   p.addParameter(dataString);
   p.run();    // Run the process and wait for its termination*/
