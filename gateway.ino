@@ -125,15 +125,15 @@ void loop()
           // Format output as string
           
           // Device ID
-          String deviceID = "";
+          String number = "";
           for (int i = 0; i < DEVICE_ID_LENGTH; i++)
           {
             if (newData[i] < 10)
-              deviceID += '0';
-            deviceID += (unsigned char)newData[i];
+              number += '0';
+            number += (unsigned char)newData[i];
           }
-          Console.print("Device ID: ");
-          Console.println(deviceID);
+          Console.print("Device number: ");
+          Console.println(number);
 
           // Temperatures
           int t0h = newData[DEVICE_ID_LENGTH];
@@ -154,20 +154,25 @@ void loop()
           Console.print("Mesh: ");
           Console.println(mesh);
 
+          // LED status (for now forced to Off)
+          int led = 0;
+
           // Message for MQTT
-          dataString = "{\"data\":{\"t\":\"";
+          dataString = "{\"number\":\"";
+          dataString += number;
+          dataString += "\",\"data\":{\"t0\":\"";
           dataString += t0h;
           dataString += ".";
           dataString += t0l;
-          dataString += "\",\"h\":\"";
+          dataString += "\",\"t1\":\"";
           dataString += t1h;
           dataString += ".";
           dataString += t1l;
-          dataString += "\",\"l\":\"";
+          dataString += "\",\"m\":\"";
           dataString += mesh;
-          dataString += "\"},\"macAddress\":\"";
-          dataString += deviceID;
-          dataString += "\"}";
+          dataString += "\",\"l\":\"";
+          dataString += led;
+          dataString += "\"}}";
           Console.print("MQTT message: ");
           Console.println(dataString);
 
