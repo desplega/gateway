@@ -18,6 +18,10 @@
 #include <Process.h>
 RH_RF95 rf95;
 
+// Node ID
+#define NODE_ID_LENGTH 6
+const char *node_id = "<1234>";  // LoRa End Node ID
+
 // Packet size
 #define DEVICE_ID_LENGTH 6
 #define TEMPERATURE_LENGTH 4
@@ -82,6 +86,7 @@ uint16_t CRC16(uint8_t *pBuffer, uint32_t length)
   return wCRC16;
 }
 
+/******************************************************************************
 uint16_t recdata( unsigned char* recbuf, int Length)
 {
   crcdata = CRC16(recbuf, Length - 2); //Get CRC code
@@ -89,6 +94,13 @@ uint16_t recdata( unsigned char* recbuf, int Length)
   recCRCData = recCRCData << 8; //
   recCRCData |= recbuf[Length - 2];
 }
+***** We ignore CRC in order to make it compatible with new device LG01-N *****/
+uint16_t recdata( unsigned char* recbuf, int Length)
+{
+  crcdata = 0; //No CRC data
+  recCRCData = 0; //No CRC data
+}
+
 void loop()
 {
   if (rf95.waitAvailableTimeout(2000))// Listen Data from LoRa Node
@@ -105,17 +117,26 @@ void loop()
         Console.print(" ");
       }
       Console.println();
+      Console.print("Packet length: ");
+      Console.println(len);
       if (crcdata == recCRCData) //Check if CRC is correct
       {
-        if (buf[0] == 1 && buf[1] == 1 && buf[2] == 1) //Check if the ID match the LoRa Node ID
+        /* Get NODE_ID */
+        int i = 0;
+        while (buf[i] == node_id[i] && i < NODE_ID_LENGTH)
+          i++;
+        if (i == NODE_ID_LENGTH) //Check if the ID match the LoRa Node ID
         {
+          /* No reply for now *********************************************
           uint8_t data[] = "    server ACK"; //Reply
           data[0] = buf[0];
           data[1] = buf[1];
           data[2] = buf[2];
           rf95.send(data, sizeof(data));// Send Reply to LoRa Node
           rf95.waitPacketSent();
+          *****************************************************************/
 
+          /* Data already formatted from device. No need to format to JSON in order to make it compatible with new LG01-N gateway ******
           int newData[DEVICE_ID_LENGTH + TEMPERATURE_LENGTH + MESH_STATUS_LENGTH];//Store Device ID, Sensor Data and Mesh status here
           for (int i = 0; i < DEVICE_ID_LENGTH + TEMPERATURE_LENGTH + MESH_STATUS_LENGTH; i++)
           {
@@ -175,13 +196,23 @@ void loop()
           dataString += "\"}}";
           Console.print("MQTT message: ");
           Console.println(dataString);
+          ***************************************************************************************************************************/
+
+          /* Data already formated in JSON from device */
+          for (int i = NODE_ID_LENGTH; i < len; i++) {
+            dataString +=  (char)buf[i];
+          }
+          Console.print("MQTT message: ");
+          Console.println(dataString);
+          /*********************************************/
 
           uploadData(); // Send data to MQTT server
           dataString = "";
         }
       }
       else
-        Console.println(" CRC Fail");
+        //Console.println(" CRC Fail");
+        Console.println(" Node ID check Fail");
     }
     else
     {
@@ -198,7 +229,7 @@ void uploadData() {//Upload Data to MQTT server
   p.addParameter("-h");
   p.addParameter("mqtt.desplega.com");
   p.addParameter("-t");
-  p.addParameter("dht11");
+  p.addParameter("sensors");
   p.addParameter("-m");
   p.addParameter(dataString);
   p.run();    // Run the process and wait for its termination*/
