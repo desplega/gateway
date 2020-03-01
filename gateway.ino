@@ -171,9 +171,9 @@ void loop()
           Console.println(t1l);
 
           // Mesh status
-          int mesh = newData[DEVICE_ID_LENGTH + TEMPERATURE_LENGTH];
-          Console.print("Mesh: ");
-          Console.println(mesh);
+          int harp = newData[DEVICE_ID_LENGTH + TEMPERATURE_LENGTH];
+          Console.print("Harp: ");
+          Console.println(harp);
 
           // LED status (for now forced to Off)
           int led = 0;
@@ -189,8 +189,8 @@ void loop()
           dataString += t1h;
           dataString += ".";
           dataString += t1l;
-          dataString += "\",\"m\":\"";
-          dataString += mesh;
+          dataString += "\",\"h\":\"";
+          dataString += harp;
           dataString += "\",\"l\":\"";
           dataString += led;
           dataString += "\"}}";
